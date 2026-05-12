@@ -1,0 +1,25 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50"><%= @project.display_name %></h1>
+    <p class="text-slate-400 mt-1">Detalhes do projeto no Scrumflow</p>
+  </div>
+</div>
+
+<div class="max-w-3xl card">
+  <h2 class="text-xl font-bold text-slate-50 mb-4">Informações Gerais</h2>
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <p class="text-slate-400 text-sm">Nome</p>
+      <p class="text-slate-50 font-medium mt-1"><%= @project.display_name %></p>
+    </div>
+    <div>
+      <p class="text-slate-400 text-sm">Empresa</p>
+      <p class="text-slate-50 font-medium mt-1"><%= @project.has_attribute?(:enterprise_id) ? @project.enterprise&.display_name || "N/A" : "N/A" %></p>
+    </div>
+    <div>
+      <p class="text-slate-400 text-sm">Criado em</p>
+      <p class="text-slate-50 font-medium mt-1"><%= @project.attribute_value(:created_at)&.strftime("%d/%m/%Y %H:%M") || "N/A" %></p>
+    </div>
+  </div>
+</div>

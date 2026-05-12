@@ -1,0 +1,49 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50">Usuários</h1>
+    <p class="text-slate-400 mt-1">Consultar usuários reais do Scrumflow</p>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="flex gap-4 mb-6">
+  <%= form_with url: admin_users_path, method: :get, local: true, class: "flex-1" do |f| %>
+    <%= f.text_field :search, placeholder: "Buscar usuário...", class: "input-field w-full", value: params[:search] %>
+  <% end %>
+</div>
+
+<!-- Table -->
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-slate-700">
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Nome</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Email</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Empresa</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Data</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr class="table-row">
+            <td class="px-6 py-4 font-medium text-slate-50"><%= user.display_name %></td>
+            <td class="px-6 py-4 text-slate-300"><%= user.display_email %></td>
+            <td class="px-6 py-4 text-slate-300"><%= user.has_attribute?(:enterprise_id) ? user.enterprise&.display_name || "N/A" : "N/A" %></td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= user.attribute_value(:created_at)&.strftime("%d/%m/%Y") || "N/A" %></td>
+            <td class="px-6 py-4">
+              <%= link_to "Ver", admin_user_path(user), class: "px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="mt-6 flex justify-center">
+  <%= paginate @users %>
+</div>

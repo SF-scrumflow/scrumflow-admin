@@ -1,0 +1,81 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50"><%= @enterprise.display_name %></h1>
+    <p class="text-slate-400 mt-1">Detalhes da empresa no Scrumflow</p>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Overview -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Info Card -->
+    <div class="card">
+      <h2 class="text-xl font-bold text-slate-50 mb-4">Informações Gerais</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-slate-400 text-sm">Nome</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.display_name %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Status</p>
+          <div class="mt-1">
+            <% if @enterprise.active_status.present? %>
+              <span class="<%= @enterprise.active_badge %> badge"><%= @enterprise.active_status %></span>
+            <% else %>
+              <span class="badge badge-info">N/A</span>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Plano</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.has_attribute?(:plan_id) ? @enterprise.plan&.display_name || 'N/A' : 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Criada em</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.has_attribute?(:created_at) && @enterprise.created_at.present? ? @enterprise.created_at.strftime("%d/%m/%Y %H:%M") : "N/A" %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Usuários</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @users_count %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Projetos</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @projects_count %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscriptions -->
+    <div class="card">
+      <h2 class="text-xl font-bold text-slate-50 mb-4">Assinaturas</h2>
+      <% if @subscriptions.any? %>
+        <div class="space-y-3">
+          <% @subscriptions.each do |subscription| %>
+            <div class="p-4 bg-slate-700/30 rounded-lg">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium text-slate-50"><%= subscription.has_attribute?(:plan_id) ? subscription.plan&.display_name || "N/A" : "N/A" %></p>
+                  <p class="text-sm text-slate-400 mt-1">
+                    <%= subscription.display_billing_period %>
+                  </p>
+                </div>
+                <span class="badge <%= case subscription.attribute_value(:status)
+                  when 'active' then 'badge-success'
+                  when 'canceled' then 'badge-danger'
+                  when 'pending' then 'badge-warning'
+                  else 'badge-info'
+                  end %>">
+                  <%= subscription.display_status.to_s.capitalize %>
+                </span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-slate-400">Nenhuma assinatura</p>
+      <% end %>
+    </div>
+  </div>
+</div>

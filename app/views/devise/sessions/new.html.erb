@@ -1,0 +1,63 @@
+<div class="w-full max-w-md">
+  <!-- Logo -->
+  <div class="text-center mb-12">
+    <div class="inline-block mb-4">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl flex items-center justify-center">
+        <svg class="w-8 h-8 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM4 5h12v8H4V5z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+    <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2">
+      Scrumflow
+    </h1>
+    <p class="text-slate-400">Admin Panel</p>
+  </div>
+
+  <!-- Login Form -->
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 backdrop-blur-xl">
+    <h2 class="text-2xl font-bold text-slate-50 mb-6">Welcome Back</h2>
+
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-5" }) do |f| %>
+
+      <!-- Email -->
+      <div>
+        <%= f.label :email, "Email", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "input-field w-full" %>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <%= f.label :password, "Senha", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.password_field :password, autocomplete: "current-password", class: "input-field w-full" %>
+      </div>
+
+      <!-- Remember me -->
+      <div class="flex items-center">
+        <%= f.check_box :remember_me, {}, "yes", "no" %>
+        <%= f.label :remember_me, "Lembrar-me", class: "ml-2 text-sm text-slate-400 cursor-pointer" %>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="pt-4">
+        <%= f.submit "Entrar", class: "btn-primary w-full py-3 text-lg font-semibold cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <!-- Links -->
+    <div class="mt-6 space-y-3 text-center">
+      <% if devise_mapping.recoverable? %>
+        <%= link_to "Esqueceu sua senha?", new_password_path(resource_name), class: "block text-sm text-cyan-400 hover:text-cyan-300 transition" %>
+      <% end %>
+      <p class="text-slate-400 text-sm">
+        Problemas ao fazer login?
+        <%= link_to "Entre em contato", "#", class: "text-cyan-400 hover:text-cyan-300 transition" %>
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <p class="text-center text-slate-500 text-sm mt-8">
+    &copy; 2026 Scrumflow. Todos os direitos reservados.
+  </p>
+</div>

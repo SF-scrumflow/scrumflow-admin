@@ -1,0 +1,46 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50">Assinaturas</h1>
+    <p class="text-slate-400 mt-1">Consultar assinaturas reais do Scrumflow</p>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-slate-700">
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Empresa</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Plano</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Status</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Periodicidade</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Data Início</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Data Fim</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @subscriptions.each do |subscription| %>
+          <tr class="table-row">
+            <td class="px-6 py-4 font-medium text-slate-50"><%= subscription.enterprise&.name %></td>
+            <td class="px-6 py-4 text-slate-300"><%= subscription.has_attribute?(:plan_id) ? subscription.plan&.display_name || "N/A" : "N/A" %></td>
+            <td class="px-6 py-4">
+              <span class="badge <%= case subscription.attribute_value(:status)
+                when 'active' then 'badge-success'
+                when 'canceled' then 'badge-danger'
+                when 'pending' then 'badge-warning'
+                else 'badge-info'
+                end %>">
+                <%= subscription.display_status.to_s.capitalize %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-slate-300"><%= subscription.display_billing_period %></td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= subscription.attribute_value(:starts_at)&.strftime("%d/%m/%Y") || "N/A" %></td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= subscription.attribute_value(:ends_at)&.strftime("%d/%m/%Y") || "N/A" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

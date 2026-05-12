@@ -1,0 +1,44 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  primary:
+    <<: *default
+    database: scrumflow_admin_development
+    username: postgres
+    password: postgres
+    host: localhost
+    port: 5433
+
+  scrumflow:
+    <<: *default
+    database: scrumflow_production
+    username: postgres
+    password: dcceec4c9a66df50fe8a
+    host: 82.25.77.197
+    port: 5432
+    sslmode: disable
+    database_tasks: false
+
+test:
+  primary:
+    <<: *default
+    database: scrumflow_admin_test
+    username: postgres
+    password: postgres
+    host: localhost
+    port: 5433
+
+production:
+  primary:
+    <<: *default
+    database: scrumflow_admin_production
+    username: scrumflow_admin
+    password: <%= ENV["SCRUMFLOW_ADMIN_DATABASE_PASSWORD"] %>
+
+  scrumflow:
+    <<: *default
+    url: <%= ENV["SCRUMFLOW_DATABASE_URL"] %>
+    database_tasks: false

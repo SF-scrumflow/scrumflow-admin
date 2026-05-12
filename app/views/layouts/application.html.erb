@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrumflow Admin</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  </head>
+
+  <body class="bg-slate-950 text-slate-50">
+    <% if admin_signed_in? %>
+      <div class="flex h-screen">
+        <!-- Sidebar -->
+        <%= render "layouts/sidebar" %>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Topbar -->
+          <%= render "layouts/topbar" %>
+
+          <!-- Page Content -->
+          <main class="flex-1 overflow-y-auto bg-slate-950">
+            <div class="p-8">
+              <% if notice %>
+                <div class="mb-4 p-4 bg-emerald-900/30 border border-emerald-700 rounded-xl text-emerald-200">
+                  <%= notice %>
+                </div>
+              <% end %>
+              <% if alert %>
+                <div class="mb-4 p-4 bg-red-900/30 border border-red-700 rounded-xl text-red-200">
+                  <%= alert %>
+                </div>
+              <% end %>
+              <%= yield %>
+            </div>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+        <%= yield %>
+      </div>
+    <% end %>
+  </body>
+</html>

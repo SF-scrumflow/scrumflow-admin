@@ -1,0 +1,68 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50">Empresas</h1>
+    <p class="text-slate-400 mt-1">Consultar empresas reais do Scrumflow</p>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="flex gap-4 mb-6">
+  <%= form_with url: admin_enterprises_path, method: :get, local: true, class: "flex-1" do |f| %>
+    <%= f.text_field :search, placeholder: "Buscar empresa...", class: "input-field w-full", value: params[:search] %>
+  <% end %>
+</div>
+
+<!-- Table -->
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead>
+        <tr class="border-b border-slate-700">
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Nome</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Plano</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Usuários</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Projetos</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Status</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Data</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @enterprises.each do |enterprise| %>
+          <tr class="table-row">
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg flex items-center justify-center">
+                  <span class="font-bold text-cyan-400"><%= enterprise.display_name.first.upcase %></span>
+                </div>
+                <span class="font-medium text-slate-50"><%= enterprise.display_name %></span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-300"><%= enterprise.has_attribute?(:plan_id) ? enterprise.plan&.display_name || 'N/A' : 'N/A' %></td>
+            <td class="px-6 py-4 text-slate-300"><%= enterprise.users.count %></td>
+            <td class="px-6 py-4 text-slate-300"><%= enterprise.projects.count %></td>
+            <td class="px-6 py-4">
+              <% if enterprise.active_status.present? %>
+                <span class="<%= enterprise.active_badge %> badge"><%= enterprise.active_status %></span>
+              <% else %>
+                <span class="badge badge-info">N/A</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= enterprise.has_attribute?(:created_at) && enterprise.created_at.present? ? enterprise.created_at.strftime("%d/%m/%Y") : "N/A" %></td>
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-2">
+                <%= link_to "Ver", admin_enterprise_path(enterprise), class: "px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition" %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="mt-6 flex justify-center">
+  <%= paginate @enterprises %>
+</div>

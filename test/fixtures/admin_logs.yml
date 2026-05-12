@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  admin_email: MyString
+  action: MyString
+  resource_type: MyString
+  resource_id: 1
+  metadata: 
+
+two:
+  admin_email: MyString
+  action: MyString
+  resource_type: MyString
+  resource_id: 1
+  metadata: 

@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  active: false
+  plan: one
+  users_count: 1
+  projects_count: 1
+
+two:
+  name: MyString
+  active: false
+  plan: two
+  users_count: 1
+  projects_count: 1
