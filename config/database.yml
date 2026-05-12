@@ -33,12 +33,8 @@ test:
 
 production:
   primary:
-    <<: *default
-    database: scrumflow_admin_production
-    username: scrumflow_admin
-    password: <%= ENV["SCRUMFLOW_ADMIN_DATABASE_PASSWORD"] %>
+    url: <%= ENV["DATABASE_URL"] %>
 
   scrumflow:
-    <<: *default
     url: <%= ENV["SCRUMFLOW_DATABASE_URL"] %>
     database_tasks: false
