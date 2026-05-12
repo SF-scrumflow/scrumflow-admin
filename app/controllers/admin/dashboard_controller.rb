@@ -1,5 +1,5 @@
 class Admin::DashboardController < Admin::BaseController
   def index
-    @total_enterprises = Enterprise.limit(1).count
+    @total_enterprises = Enterprise.connection.execute("SELECT 1")
   end
 end
