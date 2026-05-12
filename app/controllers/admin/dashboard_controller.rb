@@ -1,5 +1,9 @@
 class Admin::DashboardController < Admin::BaseController
   def index
-    @total_enterprises = Enterprise.connection.execute("SELECT 1")
+    Rails.logger.info "ANTES"
+
+    Enterprise.connection.execute("SELECT 1")
+
+    Rails.logger.info "DEPOIS"
   end
 end
