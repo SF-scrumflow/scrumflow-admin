@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   devise_for :admins
 
+  root to: redirect("/admins/sign_in")
+
   namespace :admin do
     get :me, to: "auth#me"
     root "dashboard#index"
