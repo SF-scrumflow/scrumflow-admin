@@ -57,4 +57,4 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "bundle exec rails db:migrate && bundle exec puma -C config/puma.rb"]
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
