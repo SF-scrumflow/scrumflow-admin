@@ -42,8 +42,6 @@ RUN bundle install && \
 
 COPY . .
 
-RUN bundle exec rails tailwindcss:build
-
 RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 
 RUN bundle exec bootsnap precompile app/ lib/
