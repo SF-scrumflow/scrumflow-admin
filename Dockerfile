@@ -11,7 +11,9 @@ RUN apt-get update -qq && \
     curl \
     libjemalloc2 \
     libvips \
-    postgresql-client && \
+    postgresql-client \
+    nodejs \
+    npm && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 ENV RAILS_ENV="production" \
@@ -40,6 +42,10 @@ RUN bundle install && \
 
 COPY . .
 
+RUN bundle exec rails tailwindcss:build
+
+RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+
 RUN bundle exec bootsnap precompile app/ lib/
 
 FROM base
@@ -49,7 +55,7 @@ COPY --from=build /rails /rails
 
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    chown -R rails:rails db log storage tmp public
 
 USER rails
 
