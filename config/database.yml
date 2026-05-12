@@ -42,10 +42,5 @@ production:
 
   scrumflow:
     <<: *default
-    database: scrumflow_production
-    username: postgres
-    password: dcceec4c9a66df50fe8a
-    host: 82.25.77.197
-    port: 5432
-    sslmode: disable
+    url: postgresql://postgres:dcceec4c9a66df50fe8a@tudogratis_scrumflow-postgres:5432/scrumflow-postgres?sslmode=disable
     database_tasks: false
