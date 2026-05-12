@@ -1,7 +1,7 @@
 class ScrumflowRecord < ApplicationRecord
   self.abstract_class = true
 
-  connects_to database: { writing: :scrumflow, reading: :scrumflow }
+  establish_connection :scrumflow
 
   before_save :raise_readonly_record
   before_destroy :raise_readonly_record
