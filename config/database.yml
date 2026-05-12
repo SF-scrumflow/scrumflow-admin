@@ -37,7 +37,7 @@ production:
     database: sfadmin
     username: postgres
     password: e343d790a0d58eeda9dc
-    host: sfadmin_sfadmindb
+    host: sfadmin-sfadmindb
     port: 5432
 
   scrumflow:
