@@ -42,5 +42,5 @@ production:
 
   scrumflow:
     <<: *default
-    url: postgresql://postgres:dcceec4c9a66df50fe8a@tudogratis_scrumflow-postgres:5432/scrumflow-postgres?sslmode=disable
+    url: postgresql://postgres:dcceec4c9a66df50fe8a@tudogratis_scrumflow-postgres:5432/scrumflow_production?sslmode=disable
     database_tasks: false
