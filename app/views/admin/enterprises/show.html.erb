@@ -47,6 +47,19 @@
       </div>
     </div>
 
+    <!-- Client Data -->
+    <div class="card">
+      <h2 class="text-xl font-bold text-slate-50 mb-4">Dados do Cliente</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% @client_data.each do |label, value| %>
+          <div>
+            <p class="text-slate-400 text-sm"><%= label %></p>
+            <p class="text-slate-50 font-medium mt-1 break-words"><%= value.presence || "N/A" %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
     <!-- Subscriptions -->
     <div class="card">
       <h2 class="text-xl font-bold text-slate-50 mb-4">Assinaturas</h2>
@@ -75,6 +88,155 @@
         </div>
       <% else %>
         <p class="text-slate-400">Nenhuma assinatura</p>
+      <% end %>
+    </div>
+
+    <!-- Plano e Cobrança -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-slate-50">Plano e Cobrança</h2>
+        <div class="flex gap-2">
+          <%= link_to "Registrar pagamento", register_payment_admin_enterprise_path(@enterprise), class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-sm transition" %>
+          <%= link_to "Alterar Plano/Cobrança", edit_billing_admin_enterprise_path(@enterprise), class: "px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm transition" %>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-slate-400 text-sm">Plano Atual</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.current_plan_name %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Valor Padrão do Plano</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.current_plan&.display_price || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Valor Cobrado</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.display_charged_value || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Status Financeiro</p>
+          <div class="mt-1">
+            <% if @enterprise.financial_status.present? %>
+              <span class="<%= case @enterprise.financial_status
+                when 'em_dia' then 'badge-success'
+                when 'pendente' then 'badge-warning'
+                when 'atrasado' then 'badge-danger'
+                when 'isento' then 'badge-info'
+                when 'cancelado' then 'badge-secondary'
+                when 'bloqueado' then 'badge-danger'
+                else 'badge-info'
+                end %> badge"><%= @enterprise.display_financial_status %></span>
+            <% else %>
+              <span class="badge badge-info">N/A</span>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Status da Conta</p>
+          <div class="mt-1">
+            <% if @enterprise.effective_account_status.present? %>
+              <span class="<%= @enterprise.effective_account_status_badge %> badge"><%= @enterprise.display_effective_account_status %></span>
+            <% else %>
+              <span class="badge badge-info">N/A</span>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Último Pagamento</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.last_payment_date&.strftime("%d/%m/%Y") || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Próxima Cobrança</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.next_billing_date&.strftime("%d/%m/%Y") || 'N/A' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Ciclo de Cobrança</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.billing_cycle&.capitalize || 'Mensal' %></p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Prazo de Tolerância</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.tolerance_days || 14 %> dias</p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Bloquear após</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.block_after_days || 7 %> dias</p>
+        </div>
+        <div>
+          <p class="text-slate-400 text-sm">Bloqueio Automático</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.auto_block_enabled ? 'Ativado' : 'Desativado' %></p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-slate-400 text-sm">Observações Internas</p>
+          <p class="text-slate-50 font-medium mt-1"><%= @enterprise.internal_notes || 'Nenhuma' %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Histórico de Alterações -->
+    <div class="card">
+      <h2 class="text-xl font-bold text-slate-50 mb-4">Histórico de Plano e Cobrança</h2>
+      <% if @billing_histories.any? %>
+        <div class="space-y-3">
+          <% @billing_histories.each do |history| %>
+            <div class="p-4 bg-slate-700/30 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <p class="font-medium text-slate-50"><%= history.admin&.email || 'Sistema' %> - <%= history.created_at.strftime("%d/%m/%Y %H:%M") %> (<%= history.change_type.capitalize %>)</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span class="text-slate-400">Plano:</span>
+                  <span class="text-slate-50"><%= history.previous_plan&.display_name || 'N/A' %> → <%= history.plan&.display_name || 'N/A' %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400">Valor Cobrado:</span>
+                  <span class="text-slate-50"><%= history.display_previous_charged_value %> → <%= history.display_charged_value %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400">Status Financeiro:</span>
+                  <span class="text-slate-50"><%= history.display_previous_financial_status %> → <%= history.display_financial_status %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400">Status da Conta:</span>
+                  <span class="text-slate-50"><%= history.display_previous_account_status %> → <%= history.display_account_status %></span>
+                </div>
+                <div>
+                  <span class="text-slate-400">Próxima Cobrança:</span>
+                  <span class="text-slate-50"><%= history.previous_next_billing_date&.strftime("%d/%m/%Y") || 'N/A' %> → <%= history.next_billing_date&.strftime("%d/%m/%Y") || 'N/A' %></span>
+                </div>
+                <div class="col-span-2">
+                  <span class="text-slate-400">Motivo:</span>
+                  <span class="text-slate-50"><%= history.change_reason %></span>
+                </div>
+                <% if history.payment_date.present? || history.payment_amount.present? || history.payment_method.present? %>
+                  <div class="col-span-2 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span class="text-slate-400">Data do Pagamento:</span>
+                      <span class="text-slate-50"><%= history.payment_date&.strftime("%d/%m/%Y") || 'N/A' %></span>
+                    </div>
+                    <div>
+                      <span class="text-slate-400">Valor Pago:</span>
+                      <span class="text-slate-50"><%= history.payment_amount.present? ? "R$ #{history.payment_amount.to_f.round(2)}" : 'N/A' %></span>
+                    </div>
+                    <div>
+                      <span class="text-slate-400">Método:</span>
+                      <span class="text-slate-50"><%= history.payment_method || 'N/A' %></span>
+                    </div>
+                  </div>
+                <% end %>
+                <% if history.internal_notes.present? %>
+                  <div class="col-span-2">
+                    <span class="text-slate-400">Observação:</span>
+                    <span class="text-slate-50"><%= history.internal_notes %></span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-slate-400">Nenhum histórico de alterações</p>
       <% end %>
     </div>
   </div>

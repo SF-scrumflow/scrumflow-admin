@@ -1,0 +1,104 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50">Alterar Plano e Cobrança</h1>
+    <p class="text-slate-400 mt-1"><%= @enterprise.display_name %></p>
+  </div>
+</div>
+
+<!-- Form -->
+<div class="card">
+  <%= form_with url: update_billing_admin_enterprise_path(@enterprise), method: :patch, scope: :billing, local: true do |f| %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Plano -->
+      <div>
+        <%= f.label :plan_id, "Plano", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.select :plan_id, options_for_select(@plans.map { |p| [p.display_name, p.id] }, @billing.plan_id), { include_blank: false }, class: "input-field w-full" %>
+      </div>
+
+      <!-- Valor Cobrado -->
+      <div>
+        <%= f.label :charged_value, "Valor Cobrado (R$)", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.number_field :charged_value, step: 0.01, min: 0, value: @billing.charged_value, class: "input-field w-full", placeholder: "0.00" %>
+      </div>
+
+      <!-- Status Financeiro -->
+      <div>
+        <%= f.label :financial_status, "Status Financeiro", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.select :financial_status, options_for_select([
+          ['Em dia', 'em_dia'],
+          ['Pendente', 'pendente'],
+          ['Atrasado', 'atrasado'],
+          ['Isento', 'isento'],
+          ['Cancelado', 'cancelado']
+        ], @billing.financial_status), {}, class: "input-field w-full" %>
+      </div>
+
+      <!-- Próxima Cobrança -->
+      <div>
+        <%= f.label :next_billing_date, "Próxima Cobrança", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.date_field :next_billing_date, value: @billing.next_billing_date, class: "input-field w-full" %>
+      </div>
+
+      <!-- Status da Conta -->
+      <div>
+        <%= f.label :account_status, "Status da Conta", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.select :account_status, options_for_select([
+          ['Acessível', 'acessivel'],
+          ['Trial', 'trial'],
+          ['Sem acesso', 'sem_acesso']
+        ], @billing.account_status), {}, class: "input-field w-full" %>
+      </div>
+
+      <!-- Ciclo de Cobrança -->
+      <div>
+        <%= f.label :billing_cycle, "Ciclo de Cobrança", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.select :billing_cycle, options_for_select([
+          ['Mensal', 'monthly'],
+          ['Anual', 'annual']
+        ], @billing.billing_cycle), {}, class: "input-field w-full" %>
+      </div>
+
+      <!-- Prazo de Tolerância -->
+      <div>
+        <%= f.label :tolerance_days, "Prazo de Tolerância (dias)", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.number_field :tolerance_days, min: 0, value: @billing.tolerance_days || 14, class: "input-field w-full" %>
+      </div>
+
+      <!-- Bloquear após -->
+      <div>
+        <%= f.label :block_after_days, "Bloquear após (dias)", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.number_field :block_after_days, min: 0, value: @billing.block_after_days || 7, class: "input-field w-full" %>
+      </div>
+
+      <!-- Bloqueio Automático -->
+      <div>
+        <%= f.label :auto_block_enabled, "Bloqueio Automático", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.check_box :auto_block_enabled, class: "mr-2" %>
+      </div>
+
+      <!-- Último Pagamento -->
+      <div>
+        <%= f.label :last_payment_date, "Último Pagamento", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.date_field :last_payment_date, value: @billing.last_payment_date, class: "input-field w-full" %>
+      </div>
+
+      <!-- Motivo da Alteração -->
+      <div class="md:col-span-2">
+        <%= f.label :change_reason, "Motivo da Alteração", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.text_area :change_reason, rows: 3, class: "input-field w-full", required: true %>
+      </div>
+
+      <!-- Observação Interna -->
+      <div class="md:col-span-2">
+        <%= f.label :internal_notes, "Observação Interna", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.text_area :internal_notes, rows: 3, value: @billing.internal_notes, class: "input-field w-full" %>
+      </div>
+    </div>
+
+    <div class="flex justify-end space-x-4 mt-6">
+      <%= link_to "Cancelar", admin_enterprise_path(@enterprise), class: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded transition" %>
+      <%= f.submit "Salvar Alterações", class: "px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition" %>
+    </div>
+  <% end %>
+</div>

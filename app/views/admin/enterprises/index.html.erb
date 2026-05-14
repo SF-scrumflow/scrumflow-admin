@@ -6,10 +6,59 @@
   </div>
 </div>
 
+<% sort_header = lambda do |label, sort_key|
+  next_direction = @current_sort == sort_key && @current_direction == "asc" ? "desc" : "asc"
+  indicator = @current_sort == sort_key ? " (#{@current_direction})" : ""
+  link_to "#{label}#{indicator}", admin_enterprises_path(request.query_parameters.except("page").merge(sort: sort_key, direction: next_direction)), class: "text-slate-300 hover:text-cyan-300 transition"
+end %>
+
 <!-- Search & Filter -->
-<div class="flex gap-4 mb-6">
-  <%= form_with url: admin_enterprises_path, method: :get, local: true, class: "flex-1" do |f| %>
-    <%= f.text_field :search, placeholder: "Buscar empresa...", class: "input-field w-full", value: params[:search] %>
+<div class="card mb-6">
+  <%= form_with url: admin_enterprises_path, method: :get, local: true, class: "space-y-4" do |f| %>
+    <%= f.hidden_field :sort, value: @current_sort %>
+    <%= f.hidden_field :direction, value: @current_direction %>
+
+    <%= f.text_field :search,
+      placeholder: "Buscar empresa, responsável ou e-mail...",
+      class: "input-field w-full",
+      value: params[:search],
+      oninput: "clearTimeout(this.searchTimer); this.searchTimer = setTimeout(() => this.form.requestSubmit(), 500)" %>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+      <div>
+        <%= f.label :plan_filter, "Plano", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :plan_filter, options_for_select(@filter_options[:plans], params[:plan_filter]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+
+      <div>
+        <%= f.label :financial_status, "Status financeiro", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :financial_status, options_for_select(@filter_options[:financial_statuses], params[:financial_status]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+
+      <div>
+        <%= f.label :account_status, "Status da conta", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :account_status, options_for_select(@filter_options[:account_statuses], params[:account_status]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+
+      <div>
+        <%= f.label :next_billing, "Próxima cobrança", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :next_billing, options_for_select(@filter_options[:next_billing], params[:next_billing]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+
+      <div>
+        <%= f.label :charged_value, "Valor", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :charged_value, options_for_select(@filter_options[:charged_values], params[:charged_value]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+
+      <div>
+        <%= f.label :created_at_filter, "Criação", class: "block text-xs font-semibold text-slate-400 mb-2" %>
+        <%= f.select :created_at_filter, options_for_select(@filter_options[:created_at], params[:created_at_filter]), {}, class: "input-field w-full", onchange: "this.form.requestSubmit()" %>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <%= link_to "Limpar filtros", admin_enterprises_path, class: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition" %>
+    </div>
   <% end %>
 </div>
 
@@ -18,42 +67,67 @@
   <div class="overflow-x-auto">
     <table class="w-full">
       <thead>
-        <tr class="border-b border-slate-700">
-          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Nome</th>
-          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Plano</th>
+          <tr class="border-b border-slate-700">
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Nome", "name") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Data de Criação", "created_at") %></th>
           <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Usuários</th>
           <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Projetos</th>
-          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Status</th>
-          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Data</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Plano", "plan") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Valor Cobrado", "charged_value") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Status Financeiro", "financial_status") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Status da Conta", "account_status") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Último Pagamento", "last_payment_date") %></th>
+          <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300"><%= sort_header.call("Próxima Cobrança", "next_billing_date") %></th>
           <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Ações</th>
         </tr>
       </thead>
       <tbody>
-        <% @enterprises.each do |enterprise| %>
+        <% if @enterprises.any? %>
+          <% @enterprises.each do |enterprise| %>
           <tr class="table-row">
             <td class="px-6 py-4">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg flex items-center justify-center">
-                  <span class="font-bold text-cyan-400"><%= enterprise.display_name.first.upcase %></span>
-                </div>
-                <span class="font-medium text-slate-50"><%= enterprise.display_name %></span>
-              </div>
+              <span class="font-medium text-slate-50"><%= enterprise.display_name %></span>
             </td>
-            <td class="px-6 py-4 text-slate-300"><%= enterprise.has_attribute?(:plan_id) ? enterprise.plan&.display_name || 'N/A' : 'N/A' %></td>
-            <td class="px-6 py-4 text-slate-300"><%= enterprise.users.count %></td>
-            <td class="px-6 py-4 text-slate-300"><%= enterprise.projects.count %></td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= enterprise.attribute_value(:created_at)&.strftime("%d/%m/%Y") || 'N/A' %></td>
+            <td class="px-6 py-4 text-slate-300"><%= @users_count_by_enterprise[enterprise.id] || 0 %></td>
+            <td class="px-6 py-4 text-slate-300"><%= @projects_count_by_enterprise[enterprise.id] || 0 %></td>
+            <td class="px-6 py-4 text-slate-300"><%= enterprise.current_plan_name %></td>
+            <td class="px-6 py-4 text-slate-300"><%= enterprise.display_charged_value || 'N/A' %></td>
             <td class="px-6 py-4">
-              <% if enterprise.active_status.present? %>
-                <span class="<%= enterprise.active_badge %> badge"><%= enterprise.active_status %></span>
+              <% if enterprise.financial_status.present? %>
+                <span class="<%= case enterprise.financial_status
+                  when 'em_dia' then 'badge-success'
+                  when 'pendente' then 'badge-warning'
+                  when 'atrasado' then 'badge-danger'
+                  when 'isento' then 'badge-info'
+                  when 'cancelado' then 'badge-danger'
+                  else 'badge-info'
+                  end %> badge"><%= enterprise.display_financial_status %></span>
               <% else %>
                 <span class="badge badge-info">N/A</span>
               <% end %>
             </td>
-            <td class="px-6 py-4 text-slate-300 text-sm"><%= enterprise.has_attribute?(:created_at) && enterprise.created_at.present? ? enterprise.created_at.strftime("%d/%m/%Y") : "N/A" %></td>
+            <td class="px-6 py-4">
+              <% if enterprise.effective_account_status.present? %>
+                <span class="<%= enterprise.effective_account_status_badge %> badge"><%= enterprise.display_effective_account_status %></span>
+              <% else %>
+                <span class="badge badge-info">N/A</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= enterprise.last_payment_date&.strftime("%d/%m/%Y") || 'N/A' %></td>
+            <td class="px-6 py-4 text-slate-300 text-sm"><%= enterprise.next_billing_date&.strftime("%d/%m/%Y") || 'N/A' %></td>
             <td class="px-6 py-4">
               <div class="flex items-center space-x-2">
                 <%= link_to "Ver", admin_enterprise_path(enterprise), class: "px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm transition" %>
+                <%= link_to "Alterar Plano/Cobrança", edit_billing_admin_enterprise_path(enterprise), class: "px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm transition" %>
               </div>
+            </td>
+          </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="11" class="px-6 py-10 text-center text-slate-400">
+              Nenhuma empresa encontrada com os filtros selecionados.
             </td>
           </tr>
         <% end %>

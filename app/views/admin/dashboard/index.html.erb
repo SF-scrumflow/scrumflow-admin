@@ -1,85 +1,383 @@
 <!-- Dashboard Header -->
-<div class="flex items-center justify-between mb-8">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4">
   <div>
-    <h1 class="text-3xl font-bold text-slate-50">Dashboard</h1>
-    <p class="text-slate-400 mt-1">Visão geral do sistema</p>
+    <h1 class="text-3xl font-bold text-slate-50">Dashboard Executivo SaaS</h1>
+    <p class="text-slate-400 mt-1">Métricas centrais de receita, clientes e saúde financeira.</p>
+  </div>
+  <div class="space-y-2 text-sm text-slate-400">
+    <div>Período: <strong><%= @metrics.start_date.strftime("%d/%m/%Y") %></strong> até <strong><%= @metrics.end_date.strftime("%d/%m/%Y") %></strong></div>
+    <div>Ambiente: <strong><%= Rails.env.titleize %></strong></div>
   </div>
 </div>
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <!-- Total Enterprises -->
-  <div class="card">
-    <div class="flex items-center justify-between">
+<!-- Filters -->
+<div class="card mb-8">
+  <%= form_with url: admin_root_path, method: :get, id: "dashboard-filters", local: true, class: "grid gap-4" do |f| %>
+    <div class="grid grid-cols-1 lg:grid-cols-6 gap-4">
       <div>
-        <p class="text-slate-400 text-sm font-medium">Total de Empresas</p>
-        <p class="text-3xl font-bold text-slate-50 mt-2"><%= @total_enterprises %></p>
-        <p class="text-emerald-400 text-sm mt-2">
-          <span class="font-semibold"><%= @active_enterprises || "N/A" %></span> ativas
-        </p>
+        <label class="block text-slate-400 text-sm font-medium mb-2">Data inicial</label>
+        <%= f.date_field :start_date, value: @metrics.start_date.strftime("%Y-%m-%d"), class: "input w-full" %>
       </div>
-      <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-        </svg>
+      <div>
+        <label class="block text-slate-400 text-sm font-medium mb-2">Data final</label>
+        <%= f.date_field :end_date, value: @metrics.end_date.strftime("%Y-%m-%d"), class: "input w-full" %>
+      </div>
+      <div>
+        <label class="block text-slate-400 text-sm font-medium mb-2">Ciclo de cobrança</label>
+        <%= f.select :billing_cycle, options_for_select([ ["Todos", ""] ] + @billing_cycles.map { |cycle| [cycle.titleize, cycle] }, @metrics.billing_cycle), {}, class: "input w-full" %>
+      </div>
+      <div>
+        <label class="block text-slate-400 text-sm font-medium mb-2">Status da conta</label>
+        <%= f.select :account_status, options_for_select([ ["Todos", ""] ] + @account_statuses, @metrics.account_status), {}, class: "input w-full" %>
+      </div>
+      <div>
+        <label class="block text-slate-400 text-sm font-medium mb-2">Plano</label>
+        <%= f.select :plan_id, options_for_select([ ["Todos", ""] ] + @plans.map { |plan| [plan.display_name, plan.id] }, @metrics.plan_id), {}, class: "input w-full" %>
+      </div>
+      <div class="flex items-end">
+        <%= f.submit "Aplicar filtros", class: "btn-primary w-full" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<% unless @metrics.billing_data_present? %>
+  <div class="card mb-8 bg-slate-900 text-slate-200 border border-slate-800">
+    <p class="text-sm text-slate-300">Nenhum dado de faturamento encontrado em <code>enterprise_billings</code> ou <code>billing_histories</code>. As métricas de receita e de atividade dependem desses registros.</p>
+  </div>
+<% end %>
+
+<!-- Financial KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">MRR</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.billing_data_present? ? number_to_currency(@metrics.monthly_recurring_revenue, unit: "R$ ", separator: ",", delimiter: ".") : "N/A" %></p>
+    <p class="text-slate-400 text-sm mt-2">Receita recorrente mensal estimada</p>
+  </div>
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">ARR</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.billing_data_present? ? number_to_currency(@metrics.annual_recurring_revenue, unit: "R$ ", separator: ",", delimiter: ".") : "N/A" %></p>
+    <p class="text-slate-400 text-sm mt-2">Receita recorrente anual estimada</p>
+  </div>
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">ARPU</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.billing_data_present? ? number_to_currency(@metrics.average_revenue_per_user, unit: "R$ ", separator: ",", delimiter: ".") : "N/A" %></p>
+    <p class="text-slate-400 text-sm mt-2">Receita média por cliente ativo</p>
+  </div>
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">Taxa de churn</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.billing_data_present? ? number_to_percentage(@metrics.churn_rate, precision: 2) : "N/A" %></p>
+    <p class="text-slate-400 text-sm mt-2"><%= @metrics.billing_data_present? ? "#{@metrics.churn_count} clientes cancelaram no período" : "Dados não disponíveis" %></p>
+  </div>
+</div>
+
+<div class="card mb-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-xl font-bold text-slate-50">Receita por ciclo</h2>
+      <p class="text-slate-400 text-sm">Visualização simples por ciclo de cobrança.</p>
+    </div>
+  </div>
+  <% if @metrics.revenue_by_cycle_data.present? %>
+    <% total_revenue = @metrics.revenue_by_cycle_data.values.sum.to_f %>
+    <div class="space-y-4">
+      <% @metrics.revenue_by_cycle_data.each do |cycle, value| %>
+        <% pct = total_revenue.positive? ? (value.to_f / total_revenue * 100).round(1) : 0 %>
+        <div>
+          <div class="flex justify-between text-sm text-slate-400 mb-1">
+            <span><%= cycle.titleize %></span>
+            <span><%= number_to_currency(value.to_f, unit: "R$ ", separator: ",", delimiter: ".") %></span>
+          </div>
+          <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-3 bg-cyan-500 rounded-full" style="width: <%= pct %>%"></div>
+          </div>
+          <p class="text-slate-500 text-xs mt-1"><%= pct %> % do total</p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhum dado de faturamento disponível para exibir o gráfico.</div>
+  <% end %>
+</div>
+
+<!-- Health Summary and Revenue Analytics -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+  <div class="card xl:col-span-2">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-50">Resumo Financeiro</h2>
+        <p class="text-slate-400 text-sm">Indicadores de saúde financeira e receita.</p>
+      </div>
+      <span class="text-xs text-slate-500">Período selecionado</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Contas em atraso / pendentes</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.delinquent_customers_count %></p>
+        <p class="text-slate-400 text-sm mt-2"><%= number_to_currency(@metrics.delinquent_revenue, unit: "R$ ", separator: ",", delimiter: ".") %> em valor atrasado</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Receita real coletada</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= number_to_currency(@metrics.actual_revenue, unit: "R$ ", separator: ",", delimiter: ".") %></p>
+        <p class="text-slate-400 text-sm mt-2">Pagamentos registrados no período</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Receita de expansão</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= number_to_currency(@metrics.expansion_revenue, unit: "R$ ", separator: ",", delimiter: ".") %></p>
+        <p class="text-slate-400 text-sm mt-2">Crescimento de conta no período</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Retenção de receita</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= number_to_percentage(@metrics.net_revenue_retention, precision: 2) %></p>
+        <p class="text-slate-400 text-sm mt-2">Estimativa de NRR</p>
       </div>
     </div>
   </div>
 
-  <!-- Total Subscriptions -->
   <div class="card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-slate-400 text-sm font-medium">Assinaturas</p>
-        <p class="text-3xl font-bold text-slate-50 mt-2"><%= @total_subscriptions %></p>
-        <p class="text-emerald-400 text-sm mt-2">
-          <span class="font-semibold"><%= @active_subscriptions || "N/A" %></span> ativas
-        </p>
+    <h2 class="text-xl font-bold text-slate-50 mb-4">Saúde do ambiente</h2>
+    <div class="space-y-4 text-sm text-slate-300">
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400">Ambiente</p>
+        <p class="text-slate-50 font-semibold mt-2"><%= Rails.env.titleize %></p>
       </div>
-      <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400">Status</p>
+        <p class="text-emerald-400 font-semibold mt-2">Operacional</p>
       </div>
-    </div>
-  </div>
-
-  <!-- Users -->
-  <div class="card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-slate-400 text-sm font-medium">Usuários</p>
-        <p class="text-3xl font-bold text-slate-50 mt-2"><%= @total_users %></p>
-        <p class="text-emerald-400 text-sm mt-2">Registrados em empresas</p>
-      </div>
-      <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Projects -->
-  <div class="card">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-slate-400 text-sm font-medium">Projetos</p>
-        <p class="text-3xl font-bold text-slate-50 mt-2"><%= @total_projects %></p>
-        <p class="text-emerald-400 text-sm mt-2">Registrados em empresas</p>
-      </div>
-      <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400">Última verificação</p>
+        <p class="text-slate-50 font-semibold mt-2"><%= Time.current.strftime("%d/%m/%Y %H:%M") %></p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Recent Activity -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Recent Enterprises -->
+<!-- Revenue Plan vs Actual -->
+<div class="card mb-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-xl font-bold text-slate-50">Planejado x Recebido</h2>
+      <p class="text-slate-400 text-sm">Comparativo por ciclo de cobrança.</p>
+    </div>
+  </div>
+  <% if @metrics.revenue_by_cycle_data.present? %>
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <% @metrics.revenue_by_cycle_data.each do |cycle, expected| %>
+        <div class="p-4 bg-slate-800 rounded-xl">
+          <p class="text-slate-400 uppercase text-xs tracking-[0.2em]"><%= cycle %></p>
+          <p class="text-2xl font-bold text-slate-50 mt-3"><%= number_to_currency(expected.to_f, unit: "R$ ", separator: ",", delimiter: ".") %></p>
+          <p class="text-slate-400 text-sm mt-2">Valor planejado</p>
+          <p class="text-slate-50 font-semibold mt-4"><%= number_to_currency(@metrics.collected_revenue_by_cycle[cycle].to_f, unit: "R$ ", separator: ",", delimiter: ".") %></p>
+          <p class="text-slate-400 text-sm">Recebido no período</p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="p-4 bg-slate-900 rounded-xl text-slate-300">
+      Nenhum dado de faturamento encontrado para construir o comparativo de receita.
+    </div>
+  <% end %>
+</div>
+
+<!-- Customer Segment Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">Clientes ativos</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.active_customers_count %></p>
+    <p class="text-slate-400 text-sm mt-2">Clientes com conta ativa</p>
+  </div>
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">Clientes em trial</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.trial_customers_count %></p>
+    <p class="text-slate-400 text-sm mt-2">Clientes em avaliação</p>
+  </div>
+  <div class="card">
+    <p class="text-slate-400 text-sm font-medium">Clientes churned</p>
+    <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.churned_customers_count %></p>
+    <p class="text-slate-400 text-sm mt-2">Contas canceladas / inativas</p>
+  </div>
+</div>
+
+<!-- Projects and Users Analytics -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+  <div class="card">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-50">Projetos</h2>
+        <p class="text-slate-400 text-sm">Leitura operacional dos projetos nos ambientes.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Total de projetos</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.total_projects_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Projetos cadastrados</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Projetos ativos</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.active_projects_count.nil? ? "N/A" : @metrics.active_projects_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Quando a coluna de status existir</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Novos no período</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.projects_created_count.nil? ? "N/A" : @metrics.projects_created_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Criados no período selecionado</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Média por ambiente</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= number_with_precision(@metrics.average_projects_per_enterprise, precision: 1) %></p>
+        <p class="text-slate-400 text-sm mt-2">Projetos por empresa</p>
+      </div>
+    </div>
+
+    <% if @metrics.top_enterprises_by_projects.present? %>
+      <div class="space-y-3">
+        <p class="text-slate-400 text-sm font-medium">Ambientes com mais projetos</p>
+        <% @metrics.top_enterprises_by_projects.each do |item| %>
+          <div class="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl">
+            <span class="text-slate-50 text-sm font-medium"><%= item[:enterprise]&.display_name || "Empresa ##{item[:enterprise_id]}" %></span>
+            <span class="text-slate-300 text-sm"><%= item[:count] %> projetos</span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhum projeto vinculado a empresas encontrado.</div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-50">Usuários</h2>
+        <p class="text-slate-400 text-sm">Distribuição e crescimento da base de usuários.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Total de usuários</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.total_users_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Usuários cadastrados</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Usuários ativos</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.active_users_count.nil? ? "N/A" : @metrics.active_users_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Quando a coluna de status existir</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Novos no período</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= @metrics.users_created_count.nil? ? "N/A" : @metrics.users_created_count %></p>
+        <p class="text-slate-400 text-sm mt-2">Criados no período selecionado</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Média por ambiente</p>
+        <p class="text-3xl font-bold text-slate-50 mt-3"><%= number_with_precision(@metrics.average_users_per_enterprise, precision: 1) %></p>
+        <p class="text-slate-400 text-sm mt-2">Usuários por empresa</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Usuários por projeto</p>
+        <p class="text-2xl font-bold text-slate-50 mt-3"><%= number_with_precision(@metrics.average_users_per_project, precision: 1) %></p>
+        <p class="text-slate-400 text-sm mt-2">Densidade média de uso</p>
+      </div>
+      <div class="p-4 bg-slate-800 rounded-xl">
+        <p class="text-slate-400 text-sm">Usuários por cliente ativo</p>
+        <p class="text-2xl font-bold text-slate-50 mt-3"><%= number_with_precision(@metrics.average_users_per_active_customer, precision: 1) %></p>
+        <p class="text-slate-400 text-sm mt-2">Base ativa faturável</p>
+      </div>
+    </div>
+
+    <% if @metrics.top_enterprises_by_users.present? %>
+      <div class="space-y-3">
+        <p class="text-slate-400 text-sm font-medium">Ambientes com mais usuários</p>
+        <% @metrics.top_enterprises_by_users.each do |item| %>
+          <div class="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl">
+            <span class="text-slate-50 text-sm font-medium"><%= item[:enterprise]&.display_name || "Empresa ##{item[:enterprise_id]}" %></span>
+            <span class="text-slate-300 text-sm"><%= item[:count] %> usuários</span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhum usuário vinculado a empresas encontrado.</div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Top Customers and Activities -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="xl:col-span-2 card">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-slate-50">Top 10 Clientes por Receita</h2>
+      <%= link_to "Ver Empresas", admin_enterprises_path, class: "text-cyan-400 hover:text-cyan-300 text-sm font-medium transition" %>
+    </div>
+    <% if @metrics.top_customers(10).present? %>
+      <div class="space-y-3">
+        <% @metrics.top_customers(10).each do |billing| %>
+          <div class="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition">
+            <div>
+              <p class="text-slate-50 font-medium"><%= billing.enterprise&.display_name || "Empresa ##{billing.enterprise_id}" %></p>
+              <p class="text-slate-400 text-sm"><%= billing.plan&.display_name || "Plano não definido" %></p>
+            </div>
+            <div class="text-right">
+              <p class="text-slate-50 font-semibold"><%= number_to_currency(billing.charged_value.to_f, unit: "R$ ", separator: ",", delimiter: ".") %></p>
+              <p class="text-slate-400 text-xs"><%= billing.billing_cycle.titleize %></p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhum cliente com dados de faturamento disponível.</div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h2 class="text-xl font-bold text-slate-50 mb-6">Atividades Recentes</h2>
+    <% if @metrics.recent_subscription_changes.present? %>
+      <div class="space-y-3">
+        <% @metrics.recent_subscription_changes.each do |history| %>
+          <div class="p-3 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition">
+            <p class="text-slate-50 text-sm font-medium"><%= history.enterprise&.display_name || "Empresa ##{history.enterprise_id}" %></p>
+            <p class="text-slate-400 text-xs mt-1">Alteração em <%= history.created_at.strftime('%d/%m/%Y') %> • <%= history.change_type == 'automatica' ? 'Automática' : 'Manual' %></p>
+            <p class="text-slate-300 text-sm mt-2"><%= history.change_reason.truncate(90) %></p>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhuma atividade recente de faturamento registrada.</div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Recent Payment Activity -->
+<div class="card mt-8">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-bold text-slate-50">Pagamentos Recebidos</h2>
+    <span class="text-slate-400 text-sm"><%= @metrics.actual_revenue > 0 ? "Total recebido" : "Sem pagamentos registrados" %></span>
+  </div>
+  <div class="space-y-3">
+    <% if @metrics.recent_payment_activity.present? %>
+      <% @metrics.recent_payment_activity.each do |payment| %>
+        <div class="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition">
+          <div>
+            <p class="text-slate-50 text-sm font-medium"><%= payment.enterprise&.display_name || "Empresa ##{payment.enterprise_id}" %></p>
+            <p class="text-slate-400 text-xs mt-1"><%= payment.payment_method.presence || 'Sem método' %> • <%= payment.payment_date&.strftime('%d/%m/%Y') %></p>
+          </div>
+          <div class="text-slate-50 font-semibold"><%= number_to_currency(payment.payment_amount.to_f, unit: "R$ ", separator: ",", delimiter: ".") %></div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="p-4 bg-slate-900 rounded-xl text-slate-300">Nenhum pagamento registrado no período selecionado.</div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Existing Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
   <div class="lg:col-span-2 card">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-slate-50">Empresas Recentes</h2>
@@ -105,7 +403,6 @@
     </div>
   </div>
 
-  <!-- Recent Logs -->
   <div class="card">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-slate-50">Atividade Recente</h2>

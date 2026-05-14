@@ -1,0 +1,38 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-slate-50">Registrar Pagamento</h1>
+    <p class="text-slate-400 mt-1"><%= @enterprise.display_name %></p>
+  </div>
+</div>
+
+<div class="card">
+  <%= form_with url: register_payment_admin_enterprise_path(@enterprise), method: :patch, scope: :billing, local: true do |f| %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <%= f.label :payment_date, "Data do Pagamento", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.date_field :payment_date, value: @billing.last_payment_date || Date.current, class: "input-field w-full", required: true %>
+      </div>
+
+      <div>
+        <%= f.label :payment_amount, "Valor Pago (R$)", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.number_field :payment_amount, step: 0.01, min: 0, value: @billing.charged_value, class: "input-field w-full", required: true %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= f.label :payment_method, "Método de Pagamento", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.text_field :payment_method, class: "input-field w-full", placeholder: "Ex: Boleto, Pix, Cartão" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= f.label :internal_notes, "Observação Interna", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= f.text_area :internal_notes, rows: 4, class: "input-field w-full" %>
+      </div>
+    </div>
+
+    <div class="flex justify-end space-x-4 mt-6">
+      <%= link_to "Cancelar", admin_enterprise_path(@enterprise), class: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded transition" %>
+      <%= f.submit "Confirmar Pagamento", class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition" %>
+    </div>
+  <% end %>
+</div>
