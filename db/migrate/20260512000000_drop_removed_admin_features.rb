@@ -1,7 +1,5 @@
 class DropRemovedAdminFeatures < ActiveRecord::Migration[7.2]
   def change
-    remove_foreign_key :payments, :subscriptions if foreign_key_exists?(:payments, :subscriptions)
-
     drop_table :subscriptions, if_exists: true
 
     drop_table :enterprises, if_exists: true
